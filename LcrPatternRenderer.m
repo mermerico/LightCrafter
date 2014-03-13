@@ -42,7 +42,7 @@ classdef LcrPatternRenderer < Renderer
             g = g / bitMask;
             r = r / bitMask;
             b = b / bitMask;
-            color = [r, g, b, color(4)];
+            color = [r, g, b, 1];
             
             drawArray@Renderer(obj, array, mode, first, count, color, texture, mask, filter);
         end
