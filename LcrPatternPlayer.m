@@ -1,4 +1,4 @@
-classdef LcrPatternPresentation < Presentation
+classdef LcrPatternPlayer < PrerenderedPlayer
     
     properties (Access = private)
         patternRenderer
@@ -6,8 +6,8 @@ classdef LcrPatternPresentation < Presentation
     
     methods
         
-        function obj = LcrPatternPresentation(duration)
-            obj = obj@Presentation(duration);
+        function obj = LcrPatternPlayer(presentation)
+            obj = obj@PrerenderedPlayer(presentation);
         end
         
         function bindPatternRenderer(obj, renderer)
@@ -29,20 +29,9 @@ classdef LcrPatternPresentation < Presentation
                 state.pattern = pattern;
                 state.patternDuration = patternDuration;
                 
-                % Call controllers.
-                for i = 1:length(obj.controllers)
-                    c = obj.controllers{i};
-                    handle = c{1};
-                    prop = c{2};
-                    func = c{3};
-
-                    handle.(prop) = func(state);
-                end
-
-                % Draw stimuli.
-                for i = 1:length(obj.stimuli)
-                    obj.stimuli{i}.draw();
-                end
+                obj.callControllers(state);
+                
+                obj.drawStimuli();
                 
                 obj.patternRenderer.incrementPatternIndex();
             end

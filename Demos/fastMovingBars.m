@@ -34,7 +34,7 @@ function fastMovingBars(lcrMonitorNumber)
     bar2.color = 0.5;
     
     % Create a 4 second pattern presentation.
-    presentation = LcrPatternPresentation(4);
+    presentation = Presentation(4);
     
     % Add the bar to the presentation.
     presentation.addStimulus(bar1);
@@ -48,14 +48,15 @@ function fastMovingBars(lcrMonitorNumber)
     renderer = LcrPatternRenderer(lightCrafter.getNumPatterns(), patternBitDepth);
     canvas.setRenderer(renderer);
     
-    % Bind the pattern renderer to the pattern presentation.
-    presentation.bindPatternRenderer(renderer);
+    % Create a pattern player.
+    player = LcrPatternPlayer(presentation);
+    player.bindPatternRenderer(renderer);
     
     % Enable additive blending to allow rendering multiple patterns into a single frame.
     canvas.enableBlend(GL.SRC_ALPHA, GL.ONE);
     
     % Play the presentation on the canvas!
-    presentation.play(canvas);
+    player.play(canvas);
     
     % Window automatically closes when the window object is deleted.
 end
