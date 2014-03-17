@@ -33,8 +33,8 @@ function fastMovingBars(monitorNumber)
     bar2.size = [100, height];
     bar2.color = 0.5;
     
-    % Create a 4 second pattern presentation.
-    presentation = Presentation(4);
+    % Create a 3 second pattern presentation.
+    presentation = Presentation(3);
     
     % Add the bar to the presentation.
     presentation.addStimulus(bar1);
@@ -57,6 +57,9 @@ function fastMovingBars(monitorNumber)
     
     % Play the presentation on the canvas!
     player.play(canvas);
+    
+    % After playing the presentation once, it may be replayed to skip prerendering.
+    player.replay(canvas);
     
     % Window automatically closes when the window object is deleted.
 end
