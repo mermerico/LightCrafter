@@ -1,3 +1,5 @@
+% A renderer that draws primitives into a subset of color bits depending on the current pattern index.
+
 classdef LcrPatternRenderer < Renderer
     
     properties

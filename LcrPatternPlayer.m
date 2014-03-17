@@ -1,3 +1,5 @@
+% A player that draws each frame as a sequence of patterns by coordinating with an LcrPatternRenderer.
+
 classdef LcrPatternPlayer < PrerenderedPlayer
     
     properties (Access = private)
