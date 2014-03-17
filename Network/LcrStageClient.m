@@ -17,7 +17,7 @@ classdef LcrStageClient < StageClient
         % Sets the remote LightCrafter pattern rate (Hz) and color. Rate must be an allowable pattern rate. Clears out
         % the last played presentation.
         function setLcrPatternAttributes(obj, rate, color)
-            obj.sendEvent(LcrNetEvents.SET_LCR_PATTERN_ATTRIBUTES, color, rate);
+            obj.sendEvent(LcrNetEvents.SET_LCR_PATTERN_ATTRIBUTES, rate, color);
             obj.getResponse();
         end
         

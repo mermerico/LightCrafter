@@ -99,11 +99,11 @@ classdef LcrStageServer < StageServer
         end
         
         function onEventSetLcrPatternAttributes(obj, client, value)
-            patternRate = value{2};
+            rate = value{2};
             color = value{3};
 
             % Pattern rate to bit depth.
-            bitDepth = find(obj.lightCrafter.allowablePatternRates() == patternRate, 1);
+            bitDepth = find(obj.lightCrafter.allowablePatternRates() == rate, 1);
             if isempty(bitDepth)
                 error('Specified pattern rate is not an allowable pattern rate');
             end
