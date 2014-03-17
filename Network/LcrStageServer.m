@@ -4,6 +4,23 @@ classdef LcrStageServer < StageServer
         lightCrafter
     end
     
+    methods (Static)
+        
+        function server = createAndStart(monitorNumber, port)
+            if nargin < 1
+                monitorNumber = 2;
+            end
+            
+            if nargin < 2
+                port = 5678;
+            end
+                        
+            server = LcrStageServer(port);
+            server.start(Lcr4500.NATIVE_RESOLUTION, true, LcrMonitor(monitorNumber));
+        end
+        
+    end
+    
     methods
         
         function obj = LcrStageServer(port)
@@ -21,9 +38,18 @@ classdef LcrStageServer < StageServer
         function prepareToStart(obj, varargin)
             prepareToStart@StageServer(obj, varargin{:});
             
-            obj.lightCrafter = Lcr4500(obj.canvas.window.monitor);
+            monitor = obj.canvas.window.monitor;
+            
+            obj.lightCrafter = Lcr4500(monitor);
             obj.lightCrafter.connect();
             obj.lightCrafter.setMode(LcrMode.VIDEO);
+            
+            if monitor.resolution == Lcr4500.NATIVE_RESOLUTION
+                % Stretch the projection matrix to account for the LightCrafter diamond pixel screen.
+                window = obj.canvas.window;
+                obj.canvas.projection.setIdentity();
+                obj.canvas.projection.orthographic(0, window.size(1)*2, 0, window.size(2));
+            end
         end
         
         function onEventReceived(obj, src, data)
@@ -40,8 +66,6 @@ classdef LcrStageServer < StageServer
                         obj.onEventSetLcrPatternAttributes(client, value);
                     case LcrNetEvents.GET_LCR_ALLOWABLE_PATTERN_RATES
                         obj.onEventGetLcrAllowablePatternRates(client, value);
-                    case LcrNetEvents.PLAY_LCR_PATTERN_PRESENTATION
-                        obj.onEventPlayLcrPatternPresentation(client, value);
                     otherwise
                         onEventReceived@StageServer(obj, src, data);
                 end
@@ -58,7 +82,19 @@ classdef LcrStageServer < StageServer
         function onEventSetLcrMode(obj, client, value)
             mode = value{2};
             
+            if obj.lightCrafter.getMode() ~= mode
+                obj.sessionData.player = [];
+            end
+            
             obj.lightCrafter.setMode(mode);
+            
+            if mode == LcrMode.PATTERN
+                % Enable additive blending to allow rendering multiple patterns into a single frame.
+                obj.canvas.enableBlend(GL.SRC_ALPHA, GL.ONE);
+            else
+                obj.canvas.resetBlend();
+            end
+            
             client.send(NetEvents.OK);
         end
         
@@ -71,7 +107,11 @@ classdef LcrStageServer < StageServer
             if isempty(bitDepth)
                 error('Specified pattern rate is not an allowable pattern rate');
             end
-
+            
+            if obj.lightCrafter.getPatternAttributes() ~= bitDepth
+                obj.sessionData.player = [];
+            end
+            
             obj.lightCrafter.setPatternAttributes(bitDepth, color);
             client.send(NetEvents.OK);
         end
@@ -81,23 +121,59 @@ classdef LcrStageServer < StageServer
             client.send(NetEvents.OK, rates);
         end
         
-        function onEventPlayLcrPatternPresentation(obj, client, value)
+        function onEventGetCanvasSize(obj, client, value) %#ok<INUSD>
+            size = obj.canvas.size;
+            if obj.canvas.window.monitor.resolution == Lcr4500.NATIVE_RESOLUTION
+                % Stretch for diamond pixel layout.
+                size(1) = size(1) * 2;
+            end
+            
+            client.send(NetEvents.OK, size);
+        end
+        
+        function onEventPlay(obj, client, value)
+            if obj.lightCrafter.getMode() == LcrMode.VIDEO
+                onEventPlay@StageServer(obj, client, value);
+                return;
+            end
+            
             presentation = value{2};
             
-            renderer = LcrPatternRenderer();
-            renderer.numPatterns = obj.lightCrafter.getNumPatterns();
-            renderer.patternBitDepth = obj.lightCrafter.getPatternAttributes();
+            nPatterns = obj.lightCrafter.getNumPatterns();
+            bitDepth = obj.lightCrafter.getPatternAttributes();
+            renderer = LcrPatternRenderer(nPatterns, bitDepth);
+            
             obj.canvas.setRenderer(renderer);
             resetRenderer = onCleanup(@()obj.canvas.resetRenderer());
             
-            presentation.numPatterns = renderer.numPatterns;
-            patternDrawn = addlistener(presentation, 'drewPattern', @()renderer.incrementPatternIndex()); %#ok<NASGU>
+            obj.sessionData.player = LcrPatternPlayer(presentation);
+            obj.sessionData.player.bindPatternRenderer(renderer);
             
             % Unlock client to allow async operations during play.
             client.send(NetEvents.OK);
             
             try
-                obj.sessionData.playInfo = presentation.play(obj.canvas);
+                obj.sessionData.playInfo = obj.sessionData.player.play(obj.canvas);
+            catch x
+                obj.sessionData.playInfo = x;
+            end
+        end
+        
+        function onEventReplay(obj, client, value)
+            if obj.lightCrafter.getMode() == LcrMode.VIDEO
+                onEventReplay@StageServer(obj, client, value);
+                return;
+            end
+            
+            if isempty(obj.sessionData.player)
+                error('No player exists');
+            end
+            
+            % Unlock client to allow async operations during play.
+            client.send(NetEvents.OK);
+            
+            try
+                obj.sessionData.playInfo = obj.sessionData.player.replay(obj.canvas);
             catch x
                 obj.sessionData.playInfo = x;
             end

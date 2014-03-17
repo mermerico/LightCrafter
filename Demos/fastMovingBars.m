@@ -1,13 +1,13 @@
-function fastMovingBars(lcrMonitorNumber)
+function fastMovingBars(monitorNumber)
     if nargin < 1
-        lcrMonitorNumber = 2;
+        monitorNumber = 2;
     end
     
     patternBitDepth = 8;
     patternColor = 'blue';
     
     % Setup the LightCrafter.
-    lightCrafter = Lcr4500(LcrMonitor(lcrMonitorNumber));
+    lightCrafter = Lcr4500(LcrMonitor(monitorNumber));
     lightCrafter.connect();
     lightCrafter.setMode(LcrMode.PATTERN);
     lightCrafter.setPatternAttributes(patternBitDepth, patternColor);

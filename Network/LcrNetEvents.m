@@ -13,9 +13,6 @@ classdef LcrNetEvents
         
         % Requests the currently allowable LightCrafter pattern rates.
         GET_LCR_ALLOWABLE_PATTERN_RATES = 'GET_LCR_ALLOWABLE_PATTERN_RATES'
-        
-        % Requests that a pattern presentation be played.
-        PLAY_LCR_PATTERN_PRESENTATION = 'PLAY_LCR_PATTERN_PRESENTATION'
     end
     
 end

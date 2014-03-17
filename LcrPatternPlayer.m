@@ -19,10 +19,10 @@ classdef LcrPatternPlayer < PrerenderedPlayer
     methods (Access = protected)
         
         function drawFrame(obj, frame, frameDuration, time)
-            numPatterns = obj.patternRenderer.numPatterns;            
-            patternDuration = frameDuration / numPatterns;
+            nPatterns = obj.patternRenderer.numPatterns;            
+            patternDuration = frameDuration / nPatterns;
             
-            for pattern = 0:numPatterns-1
+            for pattern = 0:nPatterns-1
                 state.frame = frame;
                 state.frameDuration = frameDuration;
                 state.time = patternDuration * pattern + time;
