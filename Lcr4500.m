@@ -23,7 +23,7 @@ classdef Lcr4500 < handle
         end
         
         function delete(obj)
-            obj.close();
+            obj.disconnect();
         end
         
         function connect(obj) %#ok<MANU>
@@ -41,7 +41,7 @@ classdef Lcr4500 < handle
             end
         end
         
-        function close(obj) %#ok<MANU>
+        function disconnect(obj) %#ok<MANU>
             lcrClose();
         end
         
