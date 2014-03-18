@@ -10,7 +10,7 @@ classdef Lcr4500 < handle
     
     properties (Constant, Access = private)
         LEDS = {'none', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'} % increasing bit order
-        MIN_EXPOSURE_PERIODS = [235, 700, 1570, 1700, 2000, 2500, 4500, 8333] % increasing bit depth order, ?s
+        MIN_EXPOSURE_PERIODS = [235, 700, 1570, 1700, 2000, 2500, 4500, 8333] % increasing bit depth order, us
         NUM_BIT_PLANES = 24
         MIN_PATTERN_BIT_DEPTH = 1
         MAX_PATTERN_BIT_DEPTH = 8
@@ -51,6 +51,11 @@ classdef Lcr4500 < handle
         
         function setMode(obj, mode) %#ok<INUSL>
             lcrSetMode(logical(mode));
+        end
+        
+        function setImageOrientation(obj, flipNorthSouth, flipEastWest) %#ok<INUSL>
+            lcrSetShortAxisImageFlip(flipNorthSouth);
+            lcrSetLongAxisImageFlip(flipEastWest);
         end
         
         % Allowable pattern rates (Hz) in increasing bit depth order.
