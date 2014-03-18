@@ -53,9 +53,9 @@ classdef Lcr4500 < handle
             lcrSetMode(logical(mode));
         end
         
-        function setImageOrientation(obj, flipNorthSouth, flipEastWest) %#ok<INUSL>
-            lcrSetShortAxisImageFlip(flipNorthSouth);
-            lcrSetLongAxisImageFlip(flipEastWest);
+        function setImageOrientation(obj, northSouthFlipped, eastWestFlipped) %#ok<INUSL>
+            lcrSetShortAxisImageFlip(northSouthFlipped);
+            lcrSetLongAxisImageFlip(eastWestFlipped);
         end
         
         % Allowable pattern rates (Hz) in increasing bit depth order.
