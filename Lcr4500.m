@@ -53,9 +53,29 @@ classdef Lcr4500 < handle
             lcrSetMode(logical(mode));
         end
         
+        function setLedEnables(obj, auto, red, green, blue) %#ok<INUSL>
+            lcrSetLedEnables(auto, red, green, blue);
+        end
+        
+        function setLedCurrents(obj, red, green, blue) %#ok<INUSL>
+            if red < 0 || red > 255 || green < 0 || green > 255 || blue < 0 || blue > 255
+                error('Current must be between 0 and 255');
+            end
+            
+            lcrSetLedCurrents(255 - red, 255 - green, 255 - blue);
+        end
+        
         function setImageOrientation(obj, northSouthFlipped, eastWestFlipped) %#ok<INUSL>
             lcrSetShortAxisImageFlip(northSouthFlipped);
             lcrSetLongAxisImageFlip(eastWestFlipped);
+        end
+        
+        function setStandby(obj, tf) %#ok<INUSL>
+            if tf
+                % Avoids artifacts.
+                lcrSetMode(logical(LcrMode.VIDEO));
+            end
+            lcrSetPowerMode(tf);
         end
         
         % Allowable pattern rates (Hz) in increasing bit depth order.
@@ -90,7 +110,7 @@ classdef Lcr4500 < handle
             lcrPatternDisplay(0);
             
             % Clear locally stored pattern LUT.
-            lcrClearPatLut();           
+            lcrClearPatLut();
             
             % Create new pattern LUT.
             nPatterns = floor(min(obj.NUM_BIT_PLANES / bitDepth, 1/obj.monitor.refreshRate/(obj.MIN_EXPOSURE_PERIODS(bitDepth) * 1e-6)));
