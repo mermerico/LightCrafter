@@ -87,14 +87,6 @@ classdef LcrStageServer < StageServer
             end
             
             obj.lightCrafter.setMode(mode);
-            
-            if mode == LcrMode.PATTERN
-                % Enable additive blending to allow rendering multiple patterns into a single frame.
-                obj.canvas.enableBlend(GL.SRC_ALPHA, GL.ONE);
-            else
-                obj.canvas.resetBlend();
-            end
-            
             client.send(NetEvents.OK);
         end
         

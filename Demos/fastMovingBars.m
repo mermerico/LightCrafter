@@ -24,19 +24,26 @@ function fastMovingBars(monitorNumber)
     canvas.projection.setIdentity();
     canvas.projection.orthographic(0, width, 0, height);
     
+    % Create a background stimulus (canvas.setClearColor should not be used in pattern mode).
+    background = Rectangle();
+    background.size = [width, height];
+    background.position = [width, height] / 2;
+    background.color = 0.1;
+    
     % Create 2 bar stimuli.
     bar1 = Rectangle();
     bar1.size = [100, height];
-    bar1.color = 0.5;
+    bar1.color = 0.7;
     
     bar2 = Rectangle();
     bar2.size = [100, height];
-    bar2.color = 0.5;
+    bar2.color = 0.7;
     
     % Create a 3 second presentation.
     presentation = Presentation(3);
     
-    % Add the bars to the presentation.
+    % Add the stimuli to the presentation.
+    presentation.addStimulus(background);
     presentation.addStimulus(bar1);
     presentation.addStimulus(bar2);
     
@@ -51,9 +58,6 @@ function fastMovingBars(monitorNumber)
     % Create a pattern player.
     player = LcrPatternPlayer(presentation);
     player.bindPatternRenderer(renderer);
-    
-    % Enable additive blending to allow rendering multiple patterns into a single frame.
-    canvas.enableBlend(GL.SRC_ALPHA, GL.ONE);
     
     % Play the presentation on the canvas!
     player.play(canvas);
