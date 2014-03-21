@@ -108,7 +108,7 @@ classdef LcrStageServer < StageServer
             end
             
             [cBitDepth, cColor] = obj.lightCrafter.getPatternAttributes();
-            if bitDepth == cBitDepth && color == cColor
+            if bitDepth == cBitDepth && strncmpi(color, cColor, length(color))
                 client.send(NetEvents.OK);
                 return;
             end
