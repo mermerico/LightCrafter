@@ -44,6 +44,9 @@ classdef LcrStageServer < StageServer
             obj.lightCrafter.connect();
             obj.lightCrafter.setMode(LcrMode.VIDEO);
             
+            % Set LEDs to enable automatically.
+            obj.lightCrafter.setLedEnables(true, true, true, true);
+            
             if monitor.resolution == Lcr4500.NATIVE_RESOLUTION
                 % Stretch the projection matrix to account for the LightCrafter diamond pixel screen.
                 window = obj.canvas.window;
