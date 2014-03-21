@@ -70,14 +70,6 @@ classdef Lcr4500 < handle
             lcrSetLongAxisImageFlip(eastWestFlipped);
         end
         
-        function setStandby(obj, tf) %#ok<INUSL>
-            if tf
-                % Avoids artifacts.
-                lcrSetMode(logical(LcrMode.VIDEO));
-            end
-            lcrSetPowerMode(tf);
-        end
-        
         % Allowable pattern rates (Hz) in increasing bit depth order.
         function rates = allowablePatternRates(obj)
             rates = nan(1, obj.MAX_PATTERN_BIT_DEPTH);
