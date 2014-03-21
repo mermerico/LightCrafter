@@ -69,6 +69,10 @@ classdef LcrStageServer < StageServer
                         obj.onEventSetLcrPatternAttributes(client, value);
                     case LcrNetEvents.GET_LCR_ALLOWABLE_PATTERN_RATES
                         obj.onEventGetLcrAllowablePatternRates(client, value);
+                    case LcrNetEvents.GET_LCR_LED_CURRENTS
+                        obj.onEventGetLcrLedCurrents(client, value);
+                    case LcrNetEvents.SET_LCR_LED_CURRENTS
+                        obj.onEventSetLcrLedCurrents(client, value);
                     otherwise
                         onEventReceived@StageServer(obj, src, data);
                 end
@@ -103,7 +107,13 @@ classdef LcrStageServer < StageServer
                 error('Specified pattern rate is not an allowable pattern rate');
             end
             
-            if obj.lightCrafter.getPatternAttributes() ~= bitDepth
+            [cBitDepth, cColor] = obj.lightCrafter.getPatternAttributes();
+            if bitDepth == cBitDepth && color == cColor
+                client.send(NetEvents.OK);
+                return;
+            end
+            
+            if bitDepth ~= cBitDepth
                 obj.sessionData.player = [];
             end
             
@@ -114,6 +124,20 @@ classdef LcrStageServer < StageServer
         function onEventGetLcrAllowablePatternRates(obj, client, value) %#ok<INUSD>
             rates = obj.lightCrafter.allowablePatternRates();
             client.send(NetEvents.OK, rates);
+        end
+        
+        function onEventGetLcrLedCurrents(obj, client, value) %#ok<INUSD>
+            [red, green, blue] = obj.lightCrafter.getLedCurrents();
+            client.send(NetEvents.OK, red, green, blue);
+        end
+        
+        function onEventSetLcrLedCurrents(obj, client, value)
+            red = value{2};
+            green = value{3};
+            blue = value{4};
+            
+            obj.lightCrafter.setLedCurrents(red, green, blue);
+            client.send(NetEvents.OK);
         end
         
         function onEventGetCanvasSize(obj, client, value) %#ok<INUSD>

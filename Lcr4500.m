@@ -57,6 +57,13 @@ classdef Lcr4500 < handle
             lcrSetLedEnables(auto, red, green, blue);
         end
         
+        function [red, green, blue] = getLedCurrents(obj) %#ok<MANU>
+            [red, green, blue] = lcrGetLedCurrents();
+            red = 255 - red;
+            green = 255 - green;
+            blue = 255 - blue;
+        end
+        
         function setLedCurrents(obj, red, green, blue) %#ok<INUSL>
             if red < 0 || red > 255 || green < 0 || green > 255 || blue < 0 || blue > 255
                 error('Current must be between 0 and 255');

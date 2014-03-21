@@ -13,6 +13,12 @@ classdef LcrNetEvents
         
         % Requests the currently allowable LightCrafter pattern rates.
         GET_LCR_ALLOWABLE_PATTERN_RATES = 'GET_LCR_ALLOWABLE_PATTERN_RATES'
+        
+        % Requests LightCrafter LED current settings.
+        GET_LCR_LED_CURRENTS = 'GET_LCR_LED_CURRENTS'
+        
+        % Requests new LightCrafter LED current settings.
+        SET_LCR_LED_CURRENTS = 'SET_LCR_LED_CURRENTS'
     end
     
 end

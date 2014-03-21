@@ -27,6 +27,21 @@ classdef LcrStageClient < StageClient
             rates = obj.getResponse();
         end
         
+        % Gets the remote LightCrafter LED currents.
+        function [red, green, blue] = getLcrLedCurrents(obj)
+            obj.sendEvent(LcrNetEvents.GET_LCR_LED_CURRENTS);
+            response = obj.getResponse();
+            red = response{1};
+            green = response{2};
+            blue = response{3};
+        end
+        
+        % Sets the remote LightCrafter LED currents.
+        function setLcrLedCurrents(obj, red, green, blue)
+            obj.sendEvent(LcrNetEvents.SET_LCR_LED_CURRENTS, red, green, blue);
+            obj.getResponse();
+        end
+        
     end
     
 end
