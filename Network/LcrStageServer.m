@@ -120,6 +120,10 @@ classdef LcrStageServer < StageServer
             client.send(NetEvents.OK, size);
         end
         
+        function onEventSetCanvasColor(obj, client, value) %#ok<INUSD>
+            error('Setting the canvas color not supported');
+        end
+        
         function onEventPlay(obj, client, value)
             presentation = value{2};
             prerender = value{3};
