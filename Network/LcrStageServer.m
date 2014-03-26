@@ -42,10 +42,12 @@ classdef LcrStageServer < StageServer
             
             obj.lightCrafter = Lcr4500(monitor);
             obj.lightCrafter.connect();
-            obj.lightCrafter.setMode(LcrMode.VIDEO);
             
             % Set LEDs to enable automatically.
             obj.lightCrafter.setLedEnables(true, true, true, true);
+            
+            obj.lightCrafter.setMode(LcrMode.PATTERN);
+            obj.lightCrafter.setPatternAttributes(Lcr4500.MAX_PATTERN_BIT_DEPTH, 'white', 1);
             
             if monitor.resolution == Lcr4500.NATIVE_RESOLUTION
                 % Stretch the projection matrix to account for the LightCrafter diamond pixel screen.
@@ -61,14 +63,8 @@ classdef LcrStageServer < StageServer
             
             try
                 switch value{1}
-                    case LcrNetEvents.GET_LCR_MODE
-                        obj.onEventGetLcrMode(client, value);
-                    case LcrNetEvents.SET_LCR_MODE
-                        obj.onEventSetLcrMode(client, value);
                     case LcrNetEvents.SET_LCR_PATTERN_ATTRIBUTES
                         obj.onEventSetLcrPatternAttributes(client, value);
-                    case LcrNetEvents.GET_LCR_ALLOWABLE_PATTERN_RATES
-                        obj.onEventGetLcrAllowablePatternRates(client, value);
                     case LcrNetEvents.GET_LCR_LED_CURRENTS
                         obj.onEventGetLcrLedCurrents(client, value);
                     case LcrNetEvents.SET_LCR_LED_CURRENTS
@@ -81,49 +77,23 @@ classdef LcrStageServer < StageServer
             end
         end
         
-        function onEventGetLcrMode(obj, client, value) %#ok<INUSD>
-            mode = obj.lightCrafter.getMode();
-            client.send(NetEvents.OK, mode);
-        end
-        
-        function onEventSetLcrMode(obj, client, value)
-            mode = value{2};
-            
-            if obj.lightCrafter.getMode() ~= mode
-                obj.sessionData.player = [];
-            end
-            
-            obj.lightCrafter.setMode(mode);
-            client.send(NetEvents.OK);
-        end
-        
         function onEventSetLcrPatternAttributes(obj, client, value)
-            rate = value{2};
+            bitDepth = value{2};
             color = value{3};
-
-            % Pattern rate to bit depth.
-            bitDepth = find(obj.lightCrafter.allowablePatternRates() == rate, 1);
-            if isempty(bitDepth)
-                error('Specified pattern rate is not an allowable pattern rate');
-            end
+            numPatterns = value{4};
             
-            [cBitDepth, cColor] = obj.lightCrafter.getPatternAttributes();
-            if bitDepth == cBitDepth && strncmpi(color, cColor, length(color))
+            [cBitDepth, cColor, cNumPatterns] = obj.lightCrafter.getPatternAttributes();
+            if bitDepth == cBitDepth && strncmpi(color, cColor, length(color)) && numPatterns == cNumPatterns
                 client.send(NetEvents.OK);
                 return;
             end
             
-            if bitDepth ~= cBitDepth
+            if bitDepth ~= cBitDepth || numPatterns ~= cNumPatterns
                 obj.sessionData.player = [];
             end
             
-            obj.lightCrafter.setPatternAttributes(bitDepth, color);
+            obj.lightCrafter.setPatternAttributes(bitDepth, color, numPatterns);
             client.send(NetEvents.OK);
-        end
-        
-        function onEventGetLcrAllowablePatternRates(obj, client, value) %#ok<INUSD>
-            rates = obj.lightCrafter.allowablePatternRates();
-            client.send(NetEvents.OK, rates);
         end
         
         function onEventGetLcrLedCurrents(obj, client, value) %#ok<INUSD>
@@ -151,48 +121,31 @@ classdef LcrStageServer < StageServer
         end
         
         function onEventPlay(obj, client, value)
-            if obj.lightCrafter.getMode() == LcrMode.VIDEO
-                onEventPlay@StageServer(obj, client, value);
-                return;
+            presentation = value{2};
+            prerender = value{3};
+            
+            if prerender
+                obj.sessionData.player = PrerenderedPlayer(presentation);
+            else
+                obj.sessionData.player = RealtimePlayer(presentation);
             end
             
-            presentation = value{2};
-            
-            nPatterns = obj.lightCrafter.getNumPatterns();
-            bitDepth = obj.lightCrafter.getPatternAttributes();
+            [bitDepth, ~, nPatterns] = obj.lightCrafter.getPatternAttributes();
             renderer = LcrPatternRenderer(nPatterns, bitDepth);
-            
+                        
             obj.canvas.setRenderer(renderer);
             resetRenderer = onCleanup(@()obj.canvas.resetRenderer());
             
-            obj.sessionData.player = LcrPatternPlayer(presentation);
-            obj.sessionData.player.bindPatternRenderer(renderer);
+            compositor = LcrPatternCompositor();
+            compositor.bindPatternRenderer(renderer);
+            
+            obj.sessionData.player.setCompositor(compositor);
             
             % Unlock client to allow async operations during play.
             client.send(NetEvents.OK);
             
             try
                 obj.sessionData.playInfo = obj.sessionData.player.play(obj.canvas);
-            catch x
-                obj.sessionData.playInfo = x;
-            end
-        end
-        
-        function onEventReplay(obj, client, value)
-            if obj.lightCrafter.getMode() == LcrMode.VIDEO
-                onEventReplay@StageServer(obj, client, value);
-                return;
-            end
-            
-            if isempty(obj.sessionData.player)
-                error('No player exists');
-            end
-            
-            % Unlock client to allow async operations during play.
-            client.send(NetEvents.OK);
-            
-            try
-                obj.sessionData.playInfo = obj.sessionData.player.replay(obj.canvas);
             catch x
                 obj.sessionData.playInfo = x;
             end
