@@ -1,3 +1,5 @@
+% A Compositor that arranges a frame by packing a sequence of patterns. 
+
 classdef LcrPatternCompositor < Compositor
     
     properties
