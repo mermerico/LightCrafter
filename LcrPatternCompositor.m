@@ -1,8 +1,6 @@
-% A player that draws each frame as a sequence of patterns by coordinating with an LcrPatternRenderer.
-
-classdef LcrPatternPlayer < PrerenderedPlayer
+classdef LcrPatternCompositor < Compositor
     
-    properties (Access = private)
+    properties
         patternRenderer
         vao
         texture
@@ -12,22 +10,17 @@ classdef LcrPatternPlayer < PrerenderedPlayer
     
     methods
         
-        function obj = LcrPatternPlayer(presentation)
-            obj = obj@PrerenderedPlayer(presentation);
-        end
-        
         function bindPatternRenderer(obj, renderer)
             obj.patternRenderer = renderer;
         end
         
-        function prerender(obj, canvas)
-            % Each vertex position is followed by a texture coordinate and a mask coordinate.
-            w = canvas.size(1);
-            h = canvas.size(2);
-            vertexData = [ 0  h  0  1,  0  1,  0  1 ...
+        function setCanvas(obj, canvas)
+            setCanvas@Compositor(obj, canvas);
+            
+            vertexData = [ 0  1  0  1,  0  1,  0  1 ...
                            0  0  0  1,  0  0,  0  0 ...
-                           w  h  0  1,  1  1,  1  1 ...
-                           w  0  0  1,  1  0,  1  0];
+                           1  1  0  1,  1  1,  1  1 ...
+                           1  0  0  1,  1  0,  1  0];
 
             vbo = VertexBufferObject(canvas, GL.ARRAY_BUFFER, single(vertexData), GL.STATIC_DRAW);
 
@@ -37,23 +30,17 @@ classdef LcrPatternPlayer < PrerenderedPlayer
             obj.vao.setAttribute(vbo, 2, 2, GL.FLOAT, GL.FALSE, 8*4, 6*4);
 
             obj.texture = TextureObject(canvas, 2);
-            obj.texture.setImage(zeros(h, w, 4, 'uint8'));
+            obj.texture.setImage(zeros(canvas.size(2), canvas.size(1), 4, 'uint8'));
             
             obj.framebuffer = FramebufferObject(canvas);
             obj.framebuffer.attachColor(0, obj.texture);
             
             obj.renderer = Renderer(canvas);
-            obj.renderer.projection.orthographic(0, canvas.size(1), 0, canvas.size(2));
-            
-            prerender@PrerenderedPlayer(obj, canvas);
+            obj.renderer.projection.orthographic(0, 1, 0, 1);
         end
         
-    end
-    
-    methods (Access = protected)
-        
-        function drawFrame(obj, canvas, frame, frameDuration, time)
-            nPatterns = obj.patternRenderer.numPatterns;            
+        function drawFrame(obj, presentation, frame, frameDuration, time)
+            nPatterns = obj.patternRenderer.numPatterns;
             patternDuration = frameDuration / nPatterns;
             
             for pattern = 0:nPatterns-1
@@ -63,16 +50,18 @@ classdef LcrPatternPlayer < PrerenderedPlayer
                 state.pattern = pattern;
                 state.patternDuration = patternDuration;
                 
-                obj.callControllers(state);
+                obj.callControllers(presentation.controllers, state);
                 
-                canvas.setFramebuffer(obj.framebuffer);
-                canvas.clear();
-                obj.drawStimuli(canvas);
-                canvas.resetFramebuffer();
+                % Draw the pattern on to a texture.
+                obj.canvas.setFramebuffer(obj.framebuffer);
+                obj.canvas.clear();
+                obj.drawStimuli(presentation.stimuli);
+                obj.canvas.resetFramebuffer();
                 
-                canvas.enableBlend(GL.SRC_ALPHA, GL.ONE);
+                % Pack the pattern into the main framebuffer.
+                obj.canvas.enableBlend(GL.SRC_ALPHA, GL.ONE);
                 obj.renderer.drawArray(obj.vao, GL.TRIANGLE_STRIP, 0, 4, [1, 1, 1, 1], [], obj.texture, []);
-                canvas.resetBlend();
+                obj.canvas.resetBlend();
                 
                 obj.patternRenderer.incrementPatternIndex();
             end

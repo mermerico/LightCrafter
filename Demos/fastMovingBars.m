@@ -52,12 +52,17 @@ function fastMovingBars(monitorNumber)
     presentation.addController(bar2, 'position', @(state)[-sin(state.time*5)*width/2+width/2, height/2]);
     
     % Create a pattern renderer for the canvas.
-    renderer = LcrPatternRenderer(lightCrafter.getNumPatterns(), patternBitDepth);
+    [~, ~, nPatterns] = lightCrafter.getPatternAttributes();
+    renderer = LcrPatternRenderer(nPatterns, patternBitDepth);
     canvas.setRenderer(renderer);
     
-    % Create a pattern player.
-    player = LcrPatternPlayer(presentation);
-    player.bindPatternRenderer(renderer);
+    % Create a pattern compositor for the player.
+    compositor = LcrPatternCompositor();
+    compositor.bindPatternRenderer(renderer);
+    
+    % Create a prerendered player.
+    player = PrerenderedPlayer(presentation);
+    player.setCompositor(compositor);
     
     % Play the presentation on the canvas!
     player.play(canvas);

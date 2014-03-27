@@ -6,14 +6,14 @@ classdef Lcr4500 < handle
     
     properties (Constant)
         NATIVE_RESOLUTION = [912, 1140];
+        MIN_PATTERN_BIT_DEPTH = 1
+        MAX_PATTERN_BIT_DEPTH = 8
     end
     
     properties (Constant, Access = private)
         LEDS = {'none', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'} % increasing bit order
         MIN_EXPOSURE_PERIODS = [235, 700, 1570, 1700, 2000, 2500, 4500, 8333] % increasing bit depth order, us
         NUM_BIT_PLANES = 24
-        MIN_PATTERN_BIT_DEPTH = 1
-        MAX_PATTERN_BIT_DEPTH = 8
     end
     
     methods
@@ -77,19 +77,22 @@ classdef Lcr4500 < handle
             lcrSetLongAxisImageFlip(eastWestFlipped);
         end
         
-        % Allowable pattern rates (Hz) in increasing bit depth order.
-        function rates = allowablePatternRates(obj)
-            rates = nan(1, obj.MAX_PATTERN_BIT_DEPTH);
-            
-            for bitDepth = obj.MIN_PATTERN_BIT_DEPTH:obj.MAX_PATTERN_BIT_DEPTH
-                theoretical = obj.monitor.refreshRate * floor(obj.NUM_BIT_PLANES / bitDepth);
-                maximum = round(1 / (obj.MIN_EXPOSURE_PERIODS(bitDepth) * 1e-6));
-
-                rates(bitDepth) = min(theoretical, maximum);
-            end
+        function r = currentPatternRate(obj)
+            [~, ~, numPatterns] = obj.getPatternAttributes();
+            r = numPatterns * obj.monitor.refreshRate;
         end
         
-        function setPatternAttributes(obj, bitDepth, color)
+        function setPatternAttributes(obj, bitDepth, color, numPatterns)
+            maxNumPatterns = floor(min(obj.NUM_BIT_PLANES / bitDepth, 1/obj.monitor.refreshRate/(obj.MIN_EXPOSURE_PERIODS(bitDepth) * 1e-6)));
+            
+            if nargin < 4 || isempty(numPatterns)
+                numPatterns = maxNumPatterns;
+            end
+            
+            if numPatterns > maxNumPatterns
+                error(['The number of patterns must be less than or equal to ' num2str(maxNumPatterns)]);
+            end
+            
             if obj.getMode() ~= LcrMode.PATTERN
                 error('Must be in pattern mode to set pattern attributes');
             end
@@ -112,8 +115,7 @@ classdef Lcr4500 < handle
             lcrClearPatLut();
             
             % Create new pattern LUT.
-            nPatterns = floor(min(obj.NUM_BIT_PLANES / bitDepth, 1/obj.monitor.refreshRate/(obj.MIN_EXPOSURE_PERIODS(bitDepth) * 1e-6)));
-            for i = 1:nPatterns
+            for i = 1:numPatterns
                 if i == 1
                     trigType = 1; % external positive
                     bufSwap = true;
@@ -134,11 +136,11 @@ classdef Lcr4500 < handle
             lcrSetPatternDisplayMode(true);
             
             % Set the sequence to repeat.
-            lcrSetPatternConfig(nPatterns, true, nPatterns, 0);
+            lcrSetPatternConfig(numPatterns, true, numPatterns, 0);
             
             % Calculate and set the necessary pattern exposure period.
             vsyncPeriod = 1 / obj.monitor.refreshRate * 1e6; % us
-            exposurePeriod = vsyncPeriod / nPatterns;
+            exposurePeriod = vsyncPeriod / numPatterns;
             lcrSetExposureFramePeriod(exposurePeriod, exposurePeriod);
             
             % Set the pattern sequence to trigger on vsync.
@@ -157,11 +159,15 @@ classdef Lcr4500 < handle
             lcrPatternDisplay(2);
         end
         
-        function [bitDepth, color] = getPatternAttributes(obj)
+        function [bitDepth, color, numPatterns] = getPatternAttributes(obj)
+            if obj.getMode() ~= LcrMode.PATTERN
+                error('Must be in pattern mode to get pattern attributes');
+            end
+            
             % Check all patterns for a consistent bit depth and color.
             [~, ~, bitDepth, ledSelect] = lcrGetPatLutItem(0);
-            nPatterns = obj.getNumPatterns();
-            for i = 2:nPatterns
+            numPatterns = lcrGetPatternConfig();
+            for i = 2:numPatterns
                 [~, ~, d, l] = lcrGetPatLutItem(i - 1);
                 
                 if d ~= bitDepth
@@ -175,10 +181,6 @@ classdef Lcr4500 < handle
             
             % LED selection to color.
             color = obj.LEDS{ledSelect + 1};
-        end
-        
-        function n = getNumPatterns(obj) %#ok<MANU>
-            n = lcrGetPatternConfig();
         end
         
     end
