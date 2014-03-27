@@ -63,6 +63,8 @@ classdef LcrStageServer < StageServer
             
             try
                 switch value{1}
+                    case LcrNetEvents.GET_LCR_PATTERN_ATTRIBUTES
+                        obj.onEventGetLcrPatternAttributes(client, value);
                     case LcrNetEvents.SET_LCR_PATTERN_ATTRIBUTES
                         obj.onEventSetLcrPatternAttributes(client, value);
                     case LcrNetEvents.GET_LCR_LED_CURRENTS
@@ -75,6 +77,11 @@ classdef LcrStageServer < StageServer
             catch x
                 client.send(NetEvents.ERROR, x);
             end
+        end
+        
+        function onEventGetLcrPatternAttributes(obj, client, value) %#ok<INUSD>
+            [bitDepth, color, numPatterns] = obj.lightCrafter.getPatternAttributes();
+            client.send(NetEvents.OK, bitDepth, color, numPatterns);
         end
         
         function onEventSetLcrPatternAttributes(obj, client, value)
@@ -121,7 +128,7 @@ classdef LcrStageServer < StageServer
         end
         
         function onEventSetCanvasColor(obj, client, value) %#ok<INUSD>
-            error('Setting the canvas color not supported');
+            error('Setting the canvas color is not supported');
         end
         
         function onEventPlay(obj, client, value)

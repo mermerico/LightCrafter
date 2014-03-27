@@ -2,7 +2,15 @@ classdef LcrStageClient < StageClient
     
     methods
         
-        % Sets the remote LightCrafter bit depth, color, and optionally number of patterns.
+        % Gets the remote LightCrafter bit depth, color, and number of patterns.
+        function [bitDepth, color, numPatterns] = getLcrPatternAttributes(obj)
+            obj.sendEvent(LcrNetEvents.GET_LCR_PATTERN_ATTRIBUTES);
+            [bitDepth, color, numPatterns] = obj.getResponse();
+        end
+        
+        % Sets the remote LightCrafter bit depth, color, and optionally number of patterns. If the number of patterns is
+        % not specified the maximum number of patterns for the given bit depth will be used (i.e. the highest pattern
+        % rate).
         function setLcrPatternAttributes(obj, bitDepth, color, numPatterns)
             if nargin < 4
                 numPatterns = [];
