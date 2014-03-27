@@ -17,12 +17,10 @@ classdef LcrPatternCompositor < Compositor
         function setCanvas(obj, canvas)
             setCanvas@Compositor(obj, canvas);
             
-            w = canvas.size(1);
-            h = canvas.size(2);
-            vertexData = [ 0  h  0  1,  0  1,  0  1 ...
+            vertexData = [ 0  1  0  1,  0  1,  0  1 ...
                            0  0  0  1,  0  0,  0  0 ...
-                           w  h  0  1,  1  1,  1  1 ...
-                           w  0  0  1,  1  0,  1  0];
+                           1  1  0  1,  1  1,  1  1 ...
+                           1  0  0  1,  1  0,  1  0];
 
             vbo = VertexBufferObject(canvas, GL.ARRAY_BUFFER, single(vertexData), GL.STATIC_DRAW);
 
@@ -32,13 +30,13 @@ classdef LcrPatternCompositor < Compositor
             obj.vao.setAttribute(vbo, 2, 2, GL.FLOAT, GL.FALSE, 8*4, 6*4);
 
             obj.texture = TextureObject(canvas, 2);
-            obj.texture.setImage(zeros(h, w, 4, 'uint8'));
+            obj.texture.setImage(zeros(canvas.size(2), canvas.size(1), 4, 'uint8'));
             
             obj.framebuffer = FramebufferObject(canvas);
             obj.framebuffer.attachColor(0, obj.texture);
             
             obj.renderer = Renderer(canvas);
-            obj.renderer.projection.orthographic(0, canvas.size(1), 0, canvas.size(2));
+            obj.renderer.projection.orthographic(0, 1, 0, 1);
         end
         
         function drawFrame(obj, presentation, frame, frameDuration, time)
@@ -54,11 +52,13 @@ classdef LcrPatternCompositor < Compositor
                 
                 obj.callControllers(presentation.controllers, state);
                 
+                % Draw the pattern on to a texture.
                 obj.canvas.setFramebuffer(obj.framebuffer);
                 obj.canvas.clear();
                 obj.drawStimuli(presentation.stimuli);
                 obj.canvas.resetFramebuffer();
                 
+                % Pack the pattern into the main framebuffer.
                 obj.canvas.enableBlend(GL.SRC_ALPHA, GL.ONE);
                 obj.renderer.drawArray(obj.vao, GL.TRIANGLE_STRIP, 0, 4, [1, 1, 1, 1], [], obj.texture, []);
                 obj.canvas.resetBlend();
