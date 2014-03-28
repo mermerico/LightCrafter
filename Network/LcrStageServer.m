@@ -89,6 +89,10 @@ classdef LcrStageServer < StageServer
             color = value{3};
             numPatterns = value{4};
             
+            if isempty(numPatterns)
+                numPatterns = obj.lightCrafter.maxNumPatternsForBitDepth(bitDepth);
+            end
+            
             [cBitDepth, cColor, cNumPatterns] = obj.lightCrafter.getPatternAttributes();
             if bitDepth == cBitDepth && strncmpi(color, cColor, length(color)) && numPatterns == cNumPatterns
                 client.send(NetEvents.OK);

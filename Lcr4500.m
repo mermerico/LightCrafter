@@ -82,8 +82,12 @@ classdef Lcr4500 < handle
             r = numPatterns * obj.monitor.refreshRate;
         end
         
+        function n = maxNumPatternsForBitDepth(obj, bitDepth)
+            n = floor(min(obj.NUM_BIT_PLANES / bitDepth, 1/obj.monitor.refreshRate/(obj.MIN_EXPOSURE_PERIODS(bitDepth) * 1e-6)));
+        end
+        
         function setPatternAttributes(obj, bitDepth, color, numPatterns)
-            maxNumPatterns = floor(min(obj.NUM_BIT_PLANES / bitDepth, 1/obj.monitor.refreshRate/(obj.MIN_EXPOSURE_PERIODS(bitDepth) * 1e-6)));
+            maxNumPatterns = obj.maxNumPatternsForBitDepth(bitDepth);
             
             if nargin < 4 || isempty(numPatterns)
                 numPatterns = maxNumPatterns;
