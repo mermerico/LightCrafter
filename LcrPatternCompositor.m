@@ -1,4 +1,4 @@
-% A Compositor that arranges a frame by packing a sequence of patterns. 
+% A compositor that arranges a frame by packing a sequence of patterns. 
 
 classdef LcrPatternCompositor < Compositor
     
@@ -41,7 +41,7 @@ classdef LcrPatternCompositor < Compositor
             obj.renderer.projection.orthographic(0, 1, 0, 1);
         end
         
-        function drawFrame(obj, presentation, frame, frameDuration, time)
+        function drawFrame(obj, stimuli, controllers, frame, frameDuration, time)
             nPatterns = obj.patternRenderer.numPatterns;
             patternDuration = frameDuration / nPatterns;
             
@@ -52,12 +52,12 @@ classdef LcrPatternCompositor < Compositor
                 state.pattern = pattern;
                 state.patternDuration = patternDuration;
                 
-                obj.callControllers(presentation.controllers, state);
+                obj.callControllers(controllers, state);
                 
                 % Draw the pattern on to a texture.
                 obj.canvas.setFramebuffer(obj.framebuffer);
                 obj.canvas.clear();
-                obj.drawStimuli(presentation.stimuli);
+                obj.drawStimuli(stimuli);
                 obj.canvas.resetFramebuffer();
                 
                 % Pack the pattern into the main framebuffer.
