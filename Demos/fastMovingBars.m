@@ -12,10 +12,8 @@ function fastMovingBars(monitorNumber)
     lightCrafter.setMode(LcrMode.PATTERN);
     lightCrafter.setPatternAttributes(patternBitDepth, patternColor);
     
-    % Open a window on the LightCrafter.
+    % Open a window on the LightCrafter and create a canvas.
     window = Window(Lcr4500.NATIVE_RESOLUTION, true, lightCrafter.monitor);
-    
-    % Create a canvas on the window.
     canvas = Canvas(window);
     
     % Stretch the projection matrix to account for the LightCrafter diamond pixel screen.
@@ -39,6 +37,10 @@ function fastMovingBars(monitorNumber)
     bar2.size = [100, height];
     bar2.color = 0.7;
     
+    % Create controllers to change the bar positions as a function of time.
+    bar1PositionController = PropertyController(bar1, 'position', @(state)[sin(state.time*5)*width/2+width/2, height/2]);
+    bar2PositionController = PropertyController(bar2, 'position', @(state)[-sin(state.time*5)*width/2+width/2, height/2]);
+    
     % Create a 3 second presentation.
     presentation = Presentation(3);
     
@@ -46,10 +48,8 @@ function fastMovingBars(monitorNumber)
     presentation.addStimulus(background);
     presentation.addStimulus(bar1);
     presentation.addStimulus(bar2);
-    
-    % Define the bar positions as a function of time.
-    presentation.addController(bar1, 'position', @(state)[sin(state.time*5)*width/2+width/2, height/2]);
-    presentation.addController(bar2, 'position', @(state)[-sin(state.time*5)*width/2+width/2, height/2]);
+    presentation.addController(bar1PositionController);
+    presentation.addController(bar2PositionController);
     
     % Create a pattern renderer for the canvas.
     [~, ~, nPatterns] = lightCrafter.getPatternAttributes();

@@ -16,8 +16,8 @@ classdef LcrPatternCompositor < Compositor
             obj.patternRenderer = renderer;
         end
         
-        function setCanvas(obj, canvas)
-            setCanvas@Compositor(obj, canvas);
+        function init(obj, canvas)
+            init@Compositor(obj, canvas);
             
             vertexData = [ 0  1  0  1,  0  1,  0  1 ...
                            0  0  0  1,  0  0,  0  0 ...
@@ -52,7 +52,7 @@ classdef LcrPatternCompositor < Compositor
                 state.pattern = pattern;
                 state.patternDuration = patternDuration;
                 
-                obj.callControllers(controllers, state);
+                obj.evaluateControllers(controllers, state);
                 
                 % Draw the pattern on to a texture.
                 obj.canvas.setFramebuffer(obj.framebuffer);
