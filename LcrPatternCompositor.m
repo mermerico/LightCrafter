@@ -4,6 +4,7 @@ classdef LcrPatternCompositor < Compositor
     
     properties
         patternRenderer
+        vbo
         vao
         texture
         framebuffer
@@ -24,12 +25,12 @@ classdef LcrPatternCompositor < Compositor
                            1  1  0  1,  1  1,  1  1 ...
                            1  0  0  1,  1  0,  1  0];
 
-            vbo = VertexBufferObject(canvas, GL.ARRAY_BUFFER, single(vertexData), GL.STATIC_DRAW);
+            obj.vbo = VertexBufferObject(canvas, GL.ARRAY_BUFFER, single(vertexData), GL.STATIC_DRAW);
 
             obj.vao = VertexArrayObject(canvas);
-            obj.vao.setAttribute(vbo, 0, 4, GL.FLOAT, GL.FALSE, 8*4, 0);
-            obj.vao.setAttribute(vbo, 1, 2, GL.FLOAT, GL.FALSE, 8*4, 4*4);
-            obj.vao.setAttribute(vbo, 2, 2, GL.FLOAT, GL.FALSE, 8*4, 6*4);
+            obj.vao.setAttribute(obj.vbo, 0, 4, GL.FLOAT, GL.FALSE, 8*4, 0);
+            obj.vao.setAttribute(obj.vbo, 1, 2, GL.FLOAT, GL.FALSE, 8*4, 4*4);
+            obj.vao.setAttribute(obj.vbo, 2, 2, GL.FLOAT, GL.FALSE, 8*4, 6*4);
 
             obj.texture = TextureObject(canvas, 2);
             obj.texture.setImage(zeros(canvas.size(2), canvas.size(1), 4, 'uint8'));
