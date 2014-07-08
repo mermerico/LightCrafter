@@ -35,8 +35,8 @@ classdef LcrStageServer < StageServer
     
     methods (Access = protected)
         
-        function prepareToStart(obj, varargin)
-            prepareToStart@StageServer(obj, varargin{:});
+        function willStart(obj)
+            willStart@StageServer(obj);
             
             monitor = obj.canvas.window.monitor;
             
@@ -55,6 +55,12 @@ classdef LcrStageServer < StageServer
                 obj.canvas.projection.setIdentity();
                 obj.canvas.projection.orthographic(0, window.size(1)*2, 0, window.size(2));
             end
+        end
+        
+        function didStop(obj)
+            didStop@StageServer(obj);
+            
+            obj.lightCrafter.disconnect();
         end
         
         function onEventReceived(obj, src, data)
