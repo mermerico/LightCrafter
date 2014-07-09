@@ -2,6 +2,13 @@ classdef LcrStageClient < StageClient
     
     methods
         
+        function obj = LcrStageClient(stageClient)
+            if nargin < 1
+                stageClient = [];
+            end
+            obj = obj@StageClient(stageClient);
+        end
+        
         % Gets the remote LightCrafter bit depth, color, and number of patterns.
         function [bitDepth, color, numPatterns] = getLcrPatternAttributes(obj)
             obj.sendEvent(LcrNetEvents.GET_LCR_PATTERN_ATTRIBUTES);
