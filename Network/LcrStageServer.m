@@ -2,6 +2,7 @@ classdef LcrStageServer < StageServer
     
     properties (Access = private)
         lightCrafter
+        background
     end
     
     methods (Static)
@@ -49,11 +50,20 @@ classdef LcrStageServer < StageServer
             obj.lightCrafter.setMode(LcrMode.PATTERN);
             obj.lightCrafter.setPatternAttributes(Lcr4500.MAX_PATTERN_BIT_DEPTH, 'white', 1);
             
+            obj.background = Rectangle();
+            obj.background.position = obj.canvas.size/2;
+            obj.background.size = obj.canvas.size;
+            obj.background.color = 0;
+            obj.background.init(obj.canvas);
+            
             if monitor.resolution == Lcr4500.NATIVE_RESOLUTION
                 % Stretch the projection matrix to account for the LightCrafter diamond pixel screen.
                 window = obj.canvas.window;
                 obj.canvas.projection.setIdentity();
                 obj.canvas.projection.orthographic(0, window.size(1)*2, 0, window.size(2));
+                
+                obj.background.position(1) = obj.background.position(1)*2;
+                obj.background.size(1) = obj.background.size(1)*2;
             end
         end
         
@@ -137,13 +147,29 @@ classdef LcrStageServer < StageServer
             client.send(NetEvents.OK, size);
         end
         
-        function onEventSetCanvasColor(obj, client, value) %#ok<INUSD>
-            error('Setting the canvas color is not supported');
+        function onEventSetCanvasColor(obj, client, value)
+            color = value{2};
+            
+            % Cannot use setClearColor directly because it will interfere with pattern rendering.
+            [bitDepth, ~, nPatterns] = obj.lightCrafter.getPatternAttributes();
+            renderer = LcrPatternRenderer(nPatterns, bitDepth);
+                        
+            obj.canvas.setRenderer(renderer);
+            resetRenderer = onCleanup(@()obj.canvas.resetRenderer());
+            
+            obj.background.color = color;
+            obj.background.draw();
+            obj.canvas.window.flip();
+            
+            client.send(NetEvents.OK);
         end
         
         function onEventPlay(obj, client, value)
             presentation = value{2};
             prerender = value{3};
+            
+            % Add the background to the presentation.
+            presentation.insertStimulus(1, obj.background);
             
             if prerender
                 obj.sessionData.player = PrerenderedPlayer(presentation);

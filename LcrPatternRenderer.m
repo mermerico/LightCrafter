@@ -28,8 +28,15 @@ classdef LcrPatternRenderer < Renderer
         end
         
         function drawArray(obj, array, mode, first, count, color, texture, mask, filter)
+            c = mean(color(1:3));
+            if c > 1
+                c = 1;
+            elseif c < 0
+                c = 0;
+            end
+            
             % Expand color to range of pattern bit depth.
-            patternColor = round(mean(color(1:3)) * (2^obj.patternBitDepth - 1));
+            patternColor = round(c * (2^obj.patternBitDepth - 1));
             
             % Shift pattern color into pattern index position.
             patternColor = bitshift(patternColor, obj.patternIndex * obj.patternBitDepth);
