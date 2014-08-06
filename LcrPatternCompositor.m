@@ -33,7 +33,7 @@ classdef LcrPatternCompositor < Compositor
             obj.vao.setAttribute(obj.vbo, 2, 2, GL.FLOAT, GL.FALSE, 8*4, 6*4);
 
             obj.texture = TextureObject(canvas, 2);
-            obj.texture.setImage(zeros(canvas.size(2), canvas.size(1), 4, 'uint8'));
+            obj.texture.setImage(zeros(canvas.size(2), canvas.size(1), 3, 'uint8'));
             
             obj.framebuffer = FramebufferObject(canvas);
             obj.framebuffer.attachColor(0, obj.texture);
