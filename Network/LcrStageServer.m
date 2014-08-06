@@ -147,20 +147,10 @@ classdef LcrStageServer < StageServer
             client.send(NetEvents.OK, size);
         end
         
-        function onEventSetCanvasColor(obj, client, value)
+        function onEventSetCanvasClearColor(obj, client, value)
             color = value{2};
             
-            % Cannot use setClearColor directly because it will interfere with pattern rendering.
-            [bitDepth, ~, nPatterns] = obj.lightCrafter.getPatternAttributes();
-            renderer = LcrPatternRenderer(nPatterns, bitDepth);
-                        
-            obj.canvas.setRenderer(renderer);
-            resetRenderer = onCleanup(@()obj.canvas.resetRenderer());
-            
-            obj.background.color = color;
-            obj.background.draw();
-            obj.canvas.window.flip();
-            
+            obj.background.color = color;            
             client.send(NetEvents.OK);
         end
         
