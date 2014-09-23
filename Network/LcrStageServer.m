@@ -87,6 +87,8 @@ classdef LcrStageServer < StageServer
                         obj.onEventGetLcrLedCurrents(client, value);
                     case LcrNetEvents.SET_LCR_LED_CURRENTS
                         obj.onEventSetLcrLedCurrents(client, value);
+                    case LcrNetEvents.GET_LCR_LED_ENABLES
+                        obj.onEventGetLcrLedEnables(client, value);
                     case LcrNetEvents.SET_LCR_LED_ENABLES
                         obj.onEventSetLcrLedEnables(client, value);
                     otherwise
@@ -137,6 +139,11 @@ classdef LcrStageServer < StageServer
             
             obj.lightCrafter.setLedCurrents(red, green, blue);
             client.send(NetEvents.OK);
+        end
+        
+        function onEventGetLcrLedEnables(obj, client, value) %#ok<INUSD>
+            [auto, red, green, blue] = obj.lightCrafter.getLedEnables();
+            client.send(NetEvents.OK, auto, red, green, blue);
         end
         
         function onEventSetLcrLedEnables(obj, client, value)

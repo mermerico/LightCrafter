@@ -53,6 +53,10 @@ classdef Lcr4500 < handle
             lcrSetMode(logical(mode));
         end
         
+        function [auto, red, green, blue] = getLedEnables(obj) %#ok<MANU>
+            [auto, red, green, blue] = lcrGetLedEnables();
+        end
+        
         function setLedEnables(obj, auto, red, green, blue) %#ok<INUSL>
             lcrSetLedEnables(auto, red, green, blue);
         end
