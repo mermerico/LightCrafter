@@ -13,6 +13,9 @@ classdef LcrNetEvents
         
         % Requests new LightCrafter LED current settings.
         SET_LCR_LED_CURRENTS = 'SET_LCR_LED_CURRENTS'
+        
+        % Requests to enable/disable LightCrafter LEDs. 
+        SET_LCR_LED_ENABLES = 'SET_LCR_LED_ENABLES'
     end
     
 end

@@ -39,6 +39,12 @@ classdef LcrStageClient < StageClient
             obj.getResponse();
         end
         
+        % Sets the remote LightCrafter LEDs to enabled/disabled.
+        function setLcrLedEnables(obj, auto, red, green, blue)
+            obj.sendEvent(LcrNetEvents.SET_LCR_LED_ENABLES, auto, red, green, blue);
+            obj.getResponse();
+        end
+        
     end
     
 end
