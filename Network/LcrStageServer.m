@@ -40,6 +40,7 @@ classdef LcrStageServer < StageServer
             willStart@StageServer(obj);
             
             monitor = obj.canvas.window.monitor;
+            monitor.setGamma(1);
             
             obj.lightCrafter = Lcr4500(monitor);
             obj.lightCrafter.connect();

@@ -6,14 +6,18 @@ function fastMovingBars(monitorNumber)
     patternBitDepth = 8;
     patternColor = 'blue';
     
+    % Set linear gamma.
+    monitor = LcrMonitor(monitorNumber);
+    monitor.setGamma(1);
+    
     % Setup the LightCrafter.
-    lightCrafter = Lcr4500(LcrMonitor(monitorNumber));
+    lightCrafter = Lcr4500(monitor);
     lightCrafter.connect();
     lightCrafter.setMode(LcrMode.PATTERN);
     lightCrafter.setPatternAttributes(patternBitDepth, patternColor);
     
     % Open a window on the LightCrafter and create a canvas.
-    window = Window(Lcr4500.NATIVE_RESOLUTION, true, lightCrafter.monitor);
+    window = Window(Lcr4500.NATIVE_RESOLUTION, true, monitor);
     canvas = Canvas(window);
     
     % Stretch the projection matrix to account for the LightCrafter diamond pixel screen.
