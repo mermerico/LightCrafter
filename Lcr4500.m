@@ -46,6 +46,22 @@ classdef Lcr4500 < handle
             lcrClose();
         end
         
+        function status = getStatus(obj)
+            [hwstat,sysstat,mainstat] = lcrGetStatus();
+            status.InternalInitializationError = ~bitget(hwstat,1);
+            status.DMDResetControllerError = bitget(hwstat,2);
+            status.ForcedSwapError = bitget(hwstat,3);
+            status.SequencerAbort = bitget(hwstat,7);
+            status.SequencerError = bitget(hwstat,8);
+            
+            status.InternalMemoryTestError = ~bitget(sysstat,1);
+            
+            status.DMDParked = bitget(mainstat,1);
+            status.SequencerRunning = bitget(mainstat,2);
+            status.FrameBufferFrozen = bitget(mainstat,3);
+            status.GammaCorrectionEnabled = bitget(mainstat,4);
+        end
+                
         function status = getVideoStatus(obj)
             status = lcrGetVideoStatus();
             status.horizontalFrequency = status.horizontalFrequency*1000;
