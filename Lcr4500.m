@@ -225,13 +225,58 @@ classdef Lcr4500 < handle
                 colors{i} = obj.LED_NAMES{ledSelect + 1};
             end
         end
-                end
-                
-                if l ~= ledSelect
-                    error('Nonhomogenenous color');
+        
+        function standby(obj)
+            for i = 1:5
+                lcrSetMode(logical(LcrMode.PATTERN));
+                pause(0.1)
+                lcrPatternDisplay(0);
+                pause(0.1);
+                lcrSetPowerMode(1);
+                pause(0.1);
+                status = obj.getStatus();
+                if status.DMDParked
+                    break
                 end
             end
+            if ~status.DMDParked
+                error('Error setting Lightcrafter to standby');
+            end
+        end
+        
+        function wakeup(obj)
+            for i = 1:50
+                lcrSetPowerMode(0);
+                pause(0.1);
+                lcrSetMode(logical(LcrMode.VIDEO));
+                pause(0.1);
+                try
+                    status = obj.getStatus();
+                    obj.getMode();
+                catch
+                    status.DMDParked = 1;
+                    status.InternalInitializationError = 0;
+                    status.SequencerRunning = 0;
+                end
+                if ~status.DMDParked && status.SequencerRunning
+                    break
+                end
+                if status.InternalInitializationError
+                    lcrSetPowerMode(1);
+                    break
+                end
+            end
+            if status.DMDParked
+                error('Error waking up Lightcrafter: DMD still parked');
+            end
             
+            if ~status.SequencerRunning
+                error('Error waking up Lightcrafter: sequencer not running');
+            end
+            
+            if status.InternalInitializationError
+                error('Error waking up Lightcrafter: Initialization error');
+            end
         end
         
     end
