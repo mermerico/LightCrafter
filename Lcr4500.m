@@ -75,6 +75,16 @@ classdef Lcr4500 < handle
         
         function setMode(obj, mode) %#ok<INUSL>
             lcrSetMode(logical(mode));
+            for i = 1:10
+                pause(0.5);
+                currentMode = obj.getMode();
+                if currentMode == mode
+                    break
+                end
+            end
+            if currentMode ~= mode
+                error(['Failed to set mode to ' char(mode)]);
+            end
         end
         
         function [auto, red, green, blue] = getLedEnables(obj) %#ok<MANU>
@@ -197,6 +207,7 @@ classdef Lcr4500 < handle
                 error('Error validating pattern sequence');
             end
             
+            pause(0.05);
             % Start the pattern sequence.
             lcrPatternDisplay(2);
         end
