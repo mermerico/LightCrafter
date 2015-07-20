@@ -7,13 +7,20 @@ classdef Lcr4500 < handle
     end
     
     properties (Constant, Access = private)
-        LEDS = {'none', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'} % increasing bit order
+        LED_NAMES  = {'none', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'};
+        LED_VALUES = {   0  ,   1  ,    2   ,     3   ,    4  ,     5    ,   6   ,    7   };
         MIN_EXPOSURE_PERIODS = [235, 700, 1570, 1700, 2000, 2500, 4500, 8333] % increasing bit depth order, us
         NUM_BIT_PLANES = 24
     end
     
+    properties (Access = private)
+        LEDS;
+    end
+    
     methods
         
+        function obj = Lcr4500()
+            obj.LEDS = containers.Map(obj.LED_NAMES,obj.LED_VALUES);
         end
         
         function delete(obj)
@@ -114,12 +121,16 @@ classdef Lcr4500 < handle
                 error(['Bit depth must be between ' num2str(obj.MIN_PATTERN_BIT_DEPTH) ' and ' num2str(obj.MAX_PATTERN_BIT_DEPTH)]);
             end
             
-            % Color to LED selection.
-            index = cellfun(@(c)strncmpi(c, color, length(color)), obj.LEDS);
-            if ~any(index)
-                error('Unknown color');
+            if strncmpi(color,'full',length(color))
+                if mod(numPatterns,3)
+                    error(['Number of patterns (' num2str(numPatterns)...
+                           ') is not divisible by 3. Full color display not possible.']);
+                end
+                ledSelect = [obj.LEDS('green') obj.LEDS('red') obj.LEDS('blue')];
+                repmat(ledSelect,[1 numPatterns/3]);
+            else
+                ledSelect = repmat(obj.LEDS(color),[1 numPatterns]);
             end
-            ledSelect = find(index, 1, 'first') - 1;
             
             % Stop the current pattern sequence.
             lcrPatternDisplay(0);
@@ -142,7 +153,7 @@ classdef Lcr4500 < handle
                 insertBlack = false;
                 trigOutPrev = false;
                 
-                lcrAddToPatLut(trigType, patNum, bitDepth, ledSelect, invertPat, insertBlack, bufSwap, trigOutPrev);
+                lcrAddToPatLut(trigType, patNum, bitDepth, ledSelect(i), invertPat, insertBlack, bufSwap, trigOutPrev);
             end
             
             % Set pattern display data to stream through 24-bit RGB external interface.
@@ -174,19 +185,19 @@ classdef Lcr4500 < handle
             lcrPatternDisplay(2);
         end
         
-        function [bitDepth, color, numPatterns] = getPatternAttributes(obj)
+        function [bitDepth, colors, numPatterns] = getPatternAttributes(obj)
             if obj.getMode() ~= LcrMode.PATTERN
                 error('Must be in pattern mode to get pattern attributes');
             end
             
             % Check all patterns for a consistent bit depth and color.
-            [~, ~, bitDepth, ledSelect] = lcrGetPatLutItem(0);
             numPatterns = lcrGetPatternConfig();
-            for i = 2:numPatterns
-                [~, ~, d, l] = lcrGetPatLutItem(i - 1);
-                
-                if d ~= bitDepth
-                    error('Nonhomogeneous bit depth');
+            for i = 1:numPatterns
+                [~, ~, bitDepth(i), ledSelect] = lcrGetPatLutItem(i - 1);
+                % LED selection to color.
+                colors{i} = obj.LED_NAMES{ledSelect + 1};
+            end
+        end
                 end
                 
                 if l ~= ledSelect
@@ -194,8 +205,6 @@ classdef Lcr4500 < handle
                 end
             end
             
-            % LED selection to color.
-            color = obj.LEDS{ledSelect + 1};
         end
         
     end
