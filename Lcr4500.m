@@ -1,9 +1,5 @@
 classdef Lcr4500 < handle
     
-    properties (SetAccess = private)
-        monitor
-    end
-    
     properties (Constant)
         NATIVE_RESOLUTION = [912, 1140];
         MIN_PATTERN_BIT_DEPTH = 1
@@ -18,8 +14,6 @@ classdef Lcr4500 < handle
     
     methods
         
-        function obj = Lcr4500(monitor)
-            obj.monitor = monitor;
         end
         
         function delete(obj)
@@ -43,6 +37,13 @@ classdef Lcr4500 < handle
         
         function disconnect(obj) %#ok<MANU>
             lcrClose();
+        end
+        
+        function status = getVideoStatus(obj)
+            status = lcrGetVideoStatus();
+            status.horizontalFrequency = status.horizontalFrequency*1000;
+            status.verticalFrequency = status.verticalFrequency/100;
+            status.pixelClock = status.pixelClock*1000;
         end
         
         function m = getMode(obj) %#ok<MANU>
@@ -83,11 +84,15 @@ classdef Lcr4500 < handle
         
         function r = currentPatternRate(obj)
             [~, ~, numPatterns] = obj.getPatternAttributes();
-            r = numPatterns * obj.monitor.refreshRate;
+            videoStatus = obj.getVideoStatus();
+            verticalFrequency = videoStatus.verticalFrequency;
+            r = numPatterns * verticalFrequency;
         end
         
         function n = maxNumPatternsForBitDepth(obj, bitDepth)
-            n = floor(min(obj.NUM_BIT_PLANES / bitDepth, 1/obj.monitor.refreshRate/(obj.MIN_EXPOSURE_PERIODS(bitDepth) * 1e-6)));
+            videoStatus = obj.getVideoStatus();
+            verticalFrequency = videoStatus.verticalFrequency;
+            n = floor(min(obj.NUM_BIT_PLANES / bitDepth, 1/verticalFrequency/(obj.MIN_EXPOSURE_PERIODS(bitDepth) * 1e-6)));
         end
         
         function setPatternAttributes(obj, bitDepth, color, numPatterns)
@@ -147,7 +152,9 @@ classdef Lcr4500 < handle
             lcrSetPatternConfig(numPatterns, true, numPatterns, 0);
             
             % Calculate and set the necessary pattern exposure period.
-            vsyncPeriod = 1 / obj.monitor.refreshRate * 1e6; % us
+            videoStatus = obj.getVideoStatus();
+            verticalFrequency = videoStatus.verticalFrequency;
+            vsyncPeriod = 1 / verticalFrequency* 1e6; % us
             exposurePeriod = vsyncPeriod / numPatterns;
             lcrSetExposureFramePeriod(exposurePeriod, exposurePeriod);
             
