@@ -153,7 +153,7 @@ classdef Lcr4500 < handle
                            ') is not divisible by 3. Full color display not possible.']);
                 end
                 ledSelect = [obj.LEDS('green') obj.LEDS('red') obj.LEDS('blue')];
-                repmat(ledSelect,[1 numPatterns/3]);
+                ledSelect = repmat(ledSelect,[1 numPatterns/3]);
             else
                 ledSelect = repmat(obj.LEDS(color),[1 numPatterns]);
             end
