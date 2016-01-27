@@ -232,6 +232,8 @@ classdef Lcr4500 < handle
                 pause(0.1)
                 lcrPatternDisplay(0);
                 pause(0.1);
+                obj.setLedEnables(0,0,0,0);
+                pause(0.1);
                 lcrSetPowerMode(1);
                 pause(0.1);
                 status = obj.getStatus();
@@ -277,6 +279,8 @@ classdef Lcr4500 < handle
             if status.InternalInitializationError
                 error('Error waking up Lightcrafter: Initialization error');
             end
+            obj.setLedEnables(1,1,1,1);
+            pause(0.1);
         end
         
     end
